@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>战术罗盘 · 本地视频分析</title>
+    <link rel="stylesheet" href="/assets/styles.css?v=7" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="masthead">
+        <div class="brand-mark">∴</div>
+        <div>
+          <span class="eyebrow">KPL SPATIAL LAB · LOCAL</span>
+          <h1>战术罗盘</h1>
+        </div>
+        <div class="privacy"><i></i> 本机处理 · 数据不上传</div>
+      </header>
+
+      <nav class="steps" aria-label="分析流程">
+        <span class="active" data-step="1"><b>01</b> 选择视频集</span>
+        <span data-step="2"><b>02</b> 校准英雄</span>
+        <span data-step="3"><b>03</b> 批量提取</span>
+        <span data-step="4"><b>04</b> 配置与统计</span>
+      </nav>
+
+      <section class="input-panel">
+        <div class="section-heading">
+          <div>
+            <span class="eyebrow">SOURCE VIDEO</span>
+            <h2>输入一场或多场对局回放</h2>
+          </div>
+          <span id="videoMeta" class="meta-note">等待读取</span>
+        </div>
+        <div class="path-row">
+          <label>
+            <span>视频或文件夹完整路径（每行一个）</span>
+            <textarea id="videoPaths" rows="3" spellcheck="false"></textarea>
+          </label>
+          <label class="small-field">
+            <span>当前视频校准画面（视频秒，必填）</span>
+            <input id="calibrationSecond" type="number" min="0" step="1" placeholder="例如 61" />
+          </label>
+          <button id="inspectButton" class="primary-button">读取首场校准画面</button>
+        </div>
+      </section>
+
+      <section id="calibrationSection" class="calibration-layout hidden">
+        <article class="map-card">
+          <div class="card-toolbar">
+            <div>
+              <span class="eyebrow">CALIBRATION FRAME</span>
+              <strong>确认十个英雄头像</strong>
+            </div>
+            <div class="calibration-tools">
+              <span id="calibrationProgress">第 1/1 场</span>
+              <div class="team-toggle">
+                <button class="active blue" data-team="blue">添加蓝方</button>
+                <button data-team="red">添加红方</button>
+              </div>
+            </div>
+          </div>
+          <div id="previewWrap" class="preview-wrap">
+            <img id="previewImage" alt="小地图校准画面" />
+            <div id="calibrationMarkers" class="marker-layer"></div>
+          </div>
+          <div class="map-help">
+            <span>点击空白处添加头像；点击已有圆点删除。重叠头像可在相邻位置各标一个点。</span>
+            <strong id="markerCount">蓝方 0/5 · 红方 0/5</strong>
+          </div>
+        </article>
+
+        <aside class="settings-card">
+          <span class="eyebrow">ANALYSIS SETTINGS</span>
+          <h3>轨迹采样设置</h3>
+          <label>
+            <span>回放倍速</span>
+            <input id="playbackSpeed" type="number" min="0.25" max="16" step="0.25" value="4" />
+          </label>
+          <label>
+            <span>开局时间偏移（秒）</span>
+            <input id="gameOffset" type="number" step="1" value="2" />
+          </label>
+          <label>
+            <span>对局采样间隔（秒）</span>
+            <select id="sampleSeconds">
+              <option value="1">每 1 秒（精细）</option>
+              <option value="2" selected>每 2 秒（推荐）</option>
+              <option value="4">每 4 秒（快速）</option>
+            </select>
+          </label>
+          <div class="settings-note">
+            测试视频为 4.0× 回放。分析在本机进行，约需 30–120 秒。
+          </div>
+          <label class="confirm-row">
+            <input id="confirmCalibration" type="checkbox" />
+            <span>我已核对本场：十个圆点都位于对应英雄头像正中心</span>
+          </label>
+          <div class="calibration-actions">
+            <button id="previousCalibrationButton" class="secondary-button" disabled>
+              上一场
+            </button>
+            <button id="analyzeButton" class="primary-button" disabled>
+              确认本场并开始分析
+            </button>
+          </div>
+        </aside>
+      </section>
+
+      <section id="progressSection" class="progress-card hidden">
+        <div>
+          <span class="eyebrow">LOCAL PROCESSING</span>
+          <h2 id="progressMessage">正在准备视频分析</h2>
+        </div>
+        <strong id="progressPercent">0%</strong>
+        <div class="progress-line"><i id="progressBar"></i></div>
+        <p>视频将按顺序逐场处理；所有中间数据只写入当前项目的 local-data 文件夹。</p>
+      </section>
+
+      <section id="resultsSection" class="results-layout hidden">
+        <article class="result-map-card">
+          <div class="card-toolbar">
+            <div>
+              <span class="eyebrow">SPATIAL QUERY</span>
+              <strong>按时间查询选手位置</strong>
+            </div>
+            <div class="toolbar-actions">
+              <select id="matchSelector" aria-label="选择对局"></select>
+              <span id="frameStatus">空白战术底图</span>
+              <button id="downloadButton" class="secondary-button">导出数据集 JSON</button>
+            </div>
+          </div>
+          <div id="resultMap" class="result-map">
+            <div class="tactical-board" aria-hidden="true">
+              <span class="zone-label zone-top">红方红区</span>
+              <span class="zone-label zone-right">红方蓝区</span>
+              <span class="zone-label zone-bottom">蓝方红区</span>
+              <span class="zone-label zone-left">蓝方蓝区</span>
+              <i class="lane-line lane-top-horizontal"></i>
+              <i class="lane-line lane-top-vertical"></i>
+              <i class="lane-line lane-middle"></i>
+              <i class="lane-line lane-bottom-horizontal"></i>
+              <i class="lane-line lane-bottom-vertical"></i>
+              <b class="lane-label label-top">对抗路</b>
+              <b class="lane-label label-middle">中路</b>
+              <b class="lane-label label-bottom">发育路</b>
+            </div>
+            <div id="resultMarkers" class="marker-layer"></div>
+          </div>
+          <div class="timeline">
+            <button id="playButton" aria-label="播放">▶</button>
+            <strong id="currentTime">00:00</strong>
+            <input id="timeSlider" type="range" min="0" max="100" value="0" />
+            <span id="durationTime">00:00</span>
+          </div>
+          <div class="forecast-strip">
+            <div>
+              <span class="eyebrow">MULTI-MATCH PROBABILITY</span>
+              <strong>查询时间点并刷新区域概率</strong>
+            </div>
+            <label>
+              <span>目标时刻</span>
+              <input id="forecastTime" type="number" min="0" step="1" value="600" />
+            </label>
+            <button id="forecastButton" class="secondary-button">查询并统计</button>
+          </div>
+        </article>
+
+        <aside class="mapping-card">
+          <div class="mapping-head">
+            <span class="eyebrow">ROLE MAPPING</span>
+            <h3>队伍、英雄与分路</h3>
+            <p>每场分析后输入红蓝双方队名，并核对十名英雄的分路；只有配置完整的对局会进入概率统计。</p>
+            <strong id="configurationStatus" class="configuration-status"></strong>
+          </div>
+          <div id="playerMappings"></div>
+          <div class="query-list">
+            <span class="eyebrow">POSITION LIST</span>
+            <div id="positionList"></div>
+          </div>
+        </aside>
+      </section>
+
+      <section id="probabilitySection" class="probability-card hidden">
+        <div class="section-heading">
+          <div>
+            <span class="eyebrow">POSITION PROBABILITY</span>
+            <h2>队伍分路区域概率</h2>
+          </div>
+          <div class="probability-actions">
+            <span id="probabilityMeta">等待完成队伍与分路配置</span>
+            <button id="downloadProbabilityButton" class="secondary-button">导出概率 CSV</button>
+          </div>
+        </div>
+        <div class="probability-table-wrap">
+          <table id="probabilityTable">
+            <thead></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <p class="probability-note">
+          统计口径：道路走廊优先归入对抗路、中路或发育路；其余位置再根据固定地图方向归入双方红蓝野区。置信度低于 50% 的样本不参与分母。
+        </p>
+      </section>
+
+      <div id="toast" class="toast" role="status"></div>
+    </main>
+    <script src="/assets/app.js?v=7"></script>
+  </body>
+</html>

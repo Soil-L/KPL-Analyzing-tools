@@ -1,0 +1,83 @@
+name: Bug 报告
+description: 报告可复现的识别、界面或运行问题
+title: "[Bug] "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢反馈。请勿上传未获授权的比赛录像、真实分析数据、访问令牌或包含个人目录的日志。
+  - type: dropdown
+    id: component
+    attributes:
+      label: 问题模块
+      options:
+        - 英雄头像校准
+        - 位置识别与轨迹关联
+        - 批量视频处理
+        - 队伍与分路配置
+        - 区域概率统计
+        - 数据导出
+        - 本地启动或依赖
+        - Web 交互原型
+        - 其他
+    validations:
+      required: true
+  - type: textarea
+    id: summary
+    attributes:
+      label: 问题描述
+      description: 说明实际行为、预期行为以及问题造成的影响。
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: 复现步骤
+      placeholder: |
+        1. 启动……
+        2. 输入……
+        3. 在……秒校准
+        4. 看到……
+    validations:
+      required: true
+  - type: textarea
+    id: video
+    attributes:
+      label: 素材与参数
+      description: 请仅填写元数据；不要直接上传无权公开的完整视频。
+      placeholder: |
+        分辨率与方向：
+        编码格式：
+        视频时长：
+        校准秒数：
+        回放倍速：
+        开局偏移：
+        采样间隔：
+  - type: textarea
+    id: environment
+    attributes:
+      label: 运行环境
+      placeholder: |
+        操作系统：
+        Python 版本：
+        浏览器：
+        CPU：
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: 日志或脱敏截图
+      description: 粘贴前请移除用户名、绝对路径、账号信息和受版权保护的内容。
+      render: shell
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: 提交前确认
+      options:
+        - label: 我已搜索现有 Issue，未发现相同问题。
+          required: true
+        - label: 我已移除隐私信息、凭证和无权公开的素材。
+          required: true
